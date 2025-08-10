@@ -100,21 +100,22 @@ def import_excel():
 @app.route("/paid", methods=["GET", "POST"])
 def add_paid():
     if request.method == "POST":
-        file = request.files.get("file")
-        if file:
-            df = pd.read_excel(file, header=None)
-            df = df.iloc[1:, :4]
-            df.columns = ["payment", "claim", "invoice", "amount"]
-            cur = mydb.cursor()
-            for _, row in df.iterrows():
-                cur.execute(
-                    "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-                    (row["payment"], row["claim"], row["invoice"], row["amount"]),
-                )
-            mydb.commit()
-            cur.close()
-            return redirect(url_for("index"))
-    return render_template("paid.html")
+
+        payment = request.form.get("payment")
+        claim = request.form.get("claim")
+        invoice = request.form.get("invoice")
+        amount = request.form.get("amount")
+
+        cur = mydb.cursor()
+        cur.execute(
+            "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+            (payment, claim, invoice, amount),
+        )
+        mydb.commit()
+        cur.close()
+        return redirect(url_for("index"))
+    return render_template("add_paid.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
