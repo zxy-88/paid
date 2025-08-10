@@ -96,5 +96,24 @@ def import_excel():
             return redirect(url_for("index"))
     return render_template("import.html")
 
+
+@app.route("/paid", methods=["GET", "POST"])
+def add_paid():
+    if request.method == "POST":
+        payment = request.form.get("payment")
+        claim = request.form.get("claim")
+        invoice = request.form.get("invoice")
+        amount = request.form.get("amount")
+
+        cur = mydb.cursor()
+        cur.execute(
+            "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+            (payment, claim, invoice, amount),
+        )
+        mydb.commit()
+        cur.close()
+        return redirect(url_for("index"))
+    return render_template("add_paid.html")
+
 if __name__ == "__main__":
     app.run(debug=True)
