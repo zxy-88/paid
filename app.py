@@ -104,8 +104,10 @@ def import_excel():
     return render_template("import.html")
 
 
+
 @app.route("/paid/import", methods=["GET", "POST"])
 @app.route("/paid/add", methods=["GET", "POST"], endpoint="add_paid")
+
 def import_paid():
     if request.method == "POST":
         file = request.files.get("file")
@@ -117,12 +119,14 @@ def import_paid():
             for _, row in df.iterrows():
                 cur.execute(
                     "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+
                     (
                         row["payment"],
                         clean_field(row["claim"]),
                         clean_field(row["invoice"]),
                         row["amount"],
                     ),
+
                 )
             mydb.commit()
             cur.close()
