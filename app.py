@@ -100,6 +100,7 @@ def import_excel():
 @app.route("/paid", methods=["GET", "POST"])
 def add_paid():
     if request.method == "POST":
+
         payment = request.form.get("payment")
         claim = request.form.get("claim")
         invoice = request.form.get("invoice")
@@ -114,6 +115,7 @@ def add_paid():
         cur.close()
         return redirect(url_for("index"))
     return render_template("add_paid.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
