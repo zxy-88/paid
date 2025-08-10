@@ -96,7 +96,11 @@ def import_excel():
             return redirect(url_for("index"))
     return render_template("import.html")
 
+
+
 @app.route("/paid/import", methods=["GET", "POST"])
+@app.route("/paid/add", methods=["GET", "POST"], endpoint="add_paid")
+
 def import_paid():
     if request.method == "POST":
         file = request.files.get("file")
@@ -119,7 +123,6 @@ def import_paid():
 @app.route("/paid")
 def paid_redirect():
     return redirect(url_for("import_paid"))
-
 
 if __name__ == "__main__":
     app.run(debug=True)
