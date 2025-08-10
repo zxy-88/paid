@@ -97,8 +97,10 @@ def import_excel():
     return render_template("import.html")
 
 
+
 @app.route("/paid/import", methods=["GET", "POST"])
 @app.route("/paid/add", methods=["GET", "POST"], endpoint="add_paid")
+
 def import_paid():
     if request.method == "POST":
         file = request.files.get("file")
