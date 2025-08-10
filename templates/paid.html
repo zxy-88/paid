@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <title>Import Paid Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="mb-3">นำเข้า Paid จาก Excel</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">ไฟล์ Excel Paid</label>
+                <input class="form-control" type="file" id="file" name="file" required>
+            </div>
+            <button type="submit" class="btn btn-primary">นำเข้า</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">กลับ</a>
+        </form>
+    </div>
+</body>
+</html>

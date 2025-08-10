@@ -13,6 +13,13 @@ mydb = mysql.connector.connect(
 )
 
 
+def clean_field(value):
+    """Remove blanks, slashes, and single quotes from a field."""
+    if pd.isna(value):
+        return ""
+    return str(value).replace("/", "").replace("'", "").strip()
+
+
 @app.route("/")
 def index():
     # รับค่าหน้าปัจจุบันจาก query string (ค่าเริ่มต้น = 1)
@@ -81,8 +88,8 @@ def import_excel():
                     """,
                     (
                         row["day"],
-                        row["claim"],
-                        row["invoice"],
+                        clean_field(row["claim"]),
+                        clean_field(row["invoice"]),
                         row["invoiceref"],
                         row["no"],
                         row["offer"],
@@ -95,6 +102,37 @@ def import_excel():
             cur.close()
             return redirect(url_for("index"))
     return render_template("import.html")
+
+
+@app.route("/paid/import", methods=["GET", "POST"])
+@app.route("/paid/add", methods=["GET", "POST"], endpoint="add_paid")
+def import_paid():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if file:
+            df = pd.read_excel(file, header=None)
+            df = df.iloc[1:, :4]
+            df.columns = ["payment", "claim", "invoice", "amount"]
+            cur = mydb.cursor()
+            for _, row in df.iterrows():
+                cur.execute(
+                    "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+                    (
+                        row["payment"],
+                        clean_field(row["claim"]),
+                        clean_field(row["invoice"]),
+                        row["amount"],
+                    ),
+                )
+            mydb.commit()
+            cur.close()
+            return redirect(url_for("index"))
+    return render_template("paid.html")
+
+
+@app.route("/paid")
+def paid_redirect():
+    return redirect(url_for("import_paid"))
 
 if __name__ == "__main__":
     app.run(debug=True)
