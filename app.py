@@ -13,6 +13,13 @@ mydb = mysql.connector.connect(
 )
 
 
+def clean_field(value):
+    """Remove blanks, slashes, and single quotes from a field."""
+    if pd.isna(value):
+        return ""
+    return str(value).replace("/", "").replace("'", "").strip()
+
+
 @app.route("/")
 def index():
     # รับค่าหน้าปัจจุบันจาก query string (ค่าเริ่มต้น = 1)
@@ -81,8 +88,8 @@ def import_excel():
                     """,
                     (
                         row["day"],
-                        row["claim"],
-                        row["invoice"],
+                        clean_field(row["claim"]),
+                        clean_field(row["invoice"]),
                         row["invoiceref"],
                         row["no"],
                         row["offer"],
@@ -112,7 +119,14 @@ def import_paid():
             for _, row in df.iterrows():
                 cur.execute(
                     "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-                    (row["payment"], row["claim"], row["invoice"], row["amount"]),
+
+                    (
+                        row["payment"],
+                        clean_field(row["claim"]),
+                        clean_field(row["invoice"]),
+                        row["amount"],
+                    ),
+
                 )
             mydb.commit()
             cur.close()
