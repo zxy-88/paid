@@ -16,6 +16,36 @@
             <button type="submit" class="btn btn-primary">นำเข้า</button>
             <a href="{{ url_for('index') }}" class="btn btn-secondary">กลับ</a>
         </form>
+
+        {% if message %}
+        <div class="alert alert-success mt-3" role="alert">{{ message }}</div>
+        {% endif %}
+
+        {% if data %}
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-sm">
+                <thead>
+                    <tr>
+                        <th>payment</th>
+                        <th>claim</th>
+                        <th>invoice</th>
+                        <th>amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>{{ row.payment }}</td>
+                        <td>{{ row.claim }}</td>
+                        <td>{{ row.invoice }}</td>
+                        <td>{{ row.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
     </div>
 </body>
 </html>

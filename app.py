@@ -61,6 +61,8 @@ def index():
 
 @app.route("/import", methods=["GET", "POST"])
 def import_excel():
+    data = None
+    message = None
     if request.method == "POST":
         file = request.files.get("file")
         if file:
@@ -100,15 +102,17 @@ def import_excel():
                 )
             mydb.commit()
             cur.close()
-            return redirect(url_for("index"))
-    return render_template("import.html")
+            data = df.to_dict(orient="records")
+            message = "นำเข้าข้อมูลแล้ว"
+    return render_template("import.html", data=data, message=message)
 
 
 
 @app.route("/paid/import", methods=["GET", "POST"])
 @app.route("/paid/add", methods=["GET", "POST"], endpoint="add_paid")
-
 def import_paid():
+    data = None
+    message = None
     if request.method == "POST":
         file = request.files.get("file")
         if file:
@@ -119,19 +123,18 @@ def import_paid():
             for _, row in df.iterrows():
                 cur.execute(
                     "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-
                     (
                         row["payment"],
                         clean_field(row["claim"]),
                         clean_field(row["invoice"]),
                         row["amount"],
                     ),
-
                 )
             mydb.commit()
             cur.close()
-            return redirect(url_for("index"))
-    return render_template("paid.html")
+            data = df.to_dict(orient="records")
+            message = "นำเข้าข้อมูลแล้ว"
+    return render_template("paid.html", data=data, message=message)
 
 
 @app.route("/paid")
