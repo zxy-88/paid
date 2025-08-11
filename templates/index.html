@@ -45,6 +45,7 @@
                             <th>อนุมัติ</th>
                             <th>สถานะตรวจ</th>
                             <th>สถานะคีย์</th>
+                            <th>สถานะจ่าย</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,6 +61,7 @@
                             <td>{{ r.approve }}</td>
                             <td>{{ r.status }}</td>
                             <td>{{ r.statuskey }}</td>
+                            <td>{% if r.paid_status == 'PAID' %}<span class="text-success fw-bold">PAID</span>{% endif %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -78,3 +80,4 @@
         </div>
     </div>
 </body>
+</html>

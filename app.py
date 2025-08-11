@@ -28,8 +28,28 @@ def index():
     offset = (page - 1) * per_page
 
     cur = mydb.cursor(dictionary=True)  # dict เพื่ออ้างชื่อคอลัมน์ใน template ได้ง่าย
-    # ดึงข้อมูลจากตาราง isurvey เฉพาะหน้าที่ต้องการ
-    cur.execute("SELECT * FROM isurvey LIMIT %s OFFSET %s", (per_page, offset))
+    # ดึงข้อมูลจากตาราง isurvey พร้อมตรวจสอบสถานะจ่าย
+    cur.execute(
+        """
+        SELECT i.*,
+               CASE
+                   WHEN EXISTS (
+                       SELECT 1 FROM paid p
+                       WHERE p.claim = i.claim
+                         AND CONCAT('SEABI-', p.invoice) = i.invoice
+                   )
+                   OR (
+                       i.status = 'ตรวจสอบแล้ว'
+                       AND EXISTS (SELECT 1 FROM paid p WHERE p.claim = i.claim)
+                   )
+               THEN 'PAID'
+               ELSE ''
+               END AS paid_status
+        FROM isurvey i
+        LIMIT %s OFFSET %s
+        """,
+        (per_page, offset),
+    )
     rows = cur.fetchall()
 
     # นับจำนวนทั้งหมดเพื่อคำนวณจำนวนหน้า
