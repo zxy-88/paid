@@ -39,7 +39,7 @@ def index():
                          AND CONCAT('SEABI-', p.invoice) = i.invoice
                    )
                    OR (
-                       i.status = 'ตรวจสอบแล้ว'
+                       i.status = "['ตรวจสอบแล้ว']"
                        AND EXISTS (SELECT 1 FROM paid p WHERE p.claim = i.claim)
                    )
                THEN 'PAID'
