@@ -35,20 +35,22 @@
                 <table class="table table-striped table-hover mb-0 align-middle">
                     <thead class="table-dark">
                         <tr>
-                            <th>day</th>
-                            <th>claim</th>
-                            <th>invoice</th>
-                            <th>invoiceref</th>
-                            <th>no</th>
-                            <th>offer</th>
-                            <th>approve</th>
-                            <th>status</th>
-                            <th>statuskey</th>
+                            <th>ลำดับ</th>
+                            <th>วันที่</th>
+                            <th>เลขเคลม</th>
+                            <th>ใบแจ้งหนี้</th>
+                            <th>ใบแจ้งหนี้อ้างอิง</th>
+                            <th>ครั้งที่</th>
+                            <th>เสนอ</th>
+                            <th>อนุมัติ</th>
+                            <th>สถานะตรวจ</th>
+                            <th>สถานะคีย์</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for r in rows %}
                         <tr>
+                            <td>{{ loop.index + (page - 1) * per_page }}</td>
                             <td>{{ r.day }}</td>
                             <td>{{ r.claim }}</td>
                             <td>{{ r.invoice }}</td>
