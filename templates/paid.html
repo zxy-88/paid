@@ -26,6 +26,7 @@
             <table class="table table-bordered table-sm">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>payment</th>
                         <th>claim</th>
                         <th>invoice</th>
@@ -35,6 +36,7 @@
                 <tbody>
                     {% for row in data %}
                     <tr>
+                        <td>{{ loop.index }}</td>
                         <td>{{ row.payment }}</td>
                         <td>{{ row.claim }}</td>
                         <td>{{ row.invoice }}</td>
@@ -43,6 +45,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <p class="mt-2">จำนวนทั้งหมด {{ data|length }} รายการ</p>
         </div>
         {% endif %}
 
