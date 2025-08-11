@@ -80,6 +80,10 @@ def import_excel():
                 "statuskey",
             ]
 
+            df["claim"] = df["claim"].apply(clean_field)
+            df["invoice"] = df["invoice"].apply(clean_field)
+            df = df[(df["claim"] != "") & (df["invoice"] != "")]
+
             cur = mydb.cursor()
             for _, row in df.iterrows():
                 cur.execute(
@@ -90,8 +94,8 @@ def import_excel():
                     """,
                     (
                         row["day"],
-                        clean_field(row["claim"]),
-                        clean_field(row["invoice"]),
+                        row["claim"],
+                        row["invoice"],
                         row["invoiceref"],
                         row["no"],
                         row["offer"],
@@ -119,14 +123,17 @@ def import_paid():
             df = pd.read_excel(file, header=None)
             df = df.iloc[1:, :4]
             df.columns = ["payment", "claim", "invoice", "amount"]
+            df["claim"] = df["claim"].apply(clean_field)
+            df["invoice"] = df["invoice"].apply(clean_field)
+            df = df[(df["claim"] != "") & (df["invoice"] != "")]
             cur = mydb.cursor()
             for _, row in df.iterrows():
                 cur.execute(
                     "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
                     (
                         row["payment"],
-                        clean_field(row["claim"]),
-                        clean_field(row["invoice"]),
+                        row["claim"],
+                        row["invoice"],
                         row["amount"],
                     ),
                 )
