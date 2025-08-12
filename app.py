@@ -34,13 +34,10 @@ def index():
         SELECT i.*,
                CASE
                    WHEN EXISTS (
-                       SELECT 1 FROM paid p
+                       SELECT 1
+                       FROM paid p
                        WHERE p.claim = i.claim
-                         AND CONCAT('SEABI-', p.invoice) = i.invoice
-                   )
-                   OR (
-                       i.status = "['ตรวจสอบแล้ว']"
-                       AND EXISTS (SELECT 1 FROM paid p WHERE p.claim = i.claim)
+                         AND REPLACE(REPLACE(i.invoice, '[', ''), ']', '') = CONCAT('SEABI-', p.invoice)
                    )
                THEN 'PAID'
                ELSE ''
