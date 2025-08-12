@@ -31,13 +31,13 @@ def index():
     # ดึงข้อมูลจากตาราง isurvey พร้อมตรวจสอบสถานะจ่าย
     cur.execute(
         """
-        SELECT i.*,
+        SELECT i.*, 
                CASE
                    WHEN EXISTS (
                        SELECT 1
                        FROM paid p
                        WHERE p.claim = i.claim
-                         AND REPLACE(REPLACE(i.invoice, '[', ''), ']', '') = CONCAT('SEABI-', p.invoice)
+                        AND REPLACE(REPLACE(i.invoiceref, '[', ''), ']', '') LIKE CONCAT('%', p.invoice, '%')
                    )
                THEN 'PAID'
                ELSE ''
