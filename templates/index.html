@@ -47,8 +47,9 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-auto ms-auto">
-                <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="ค้นหา">
+            <div class="col-auto ms-auto position-relative">
+                <input type="text" name="search" value="{{ search }}" class="form-control pe-5" placeholder="ค้นหา">
+                <button type="button" id="clearSearch" class="btn-close position-absolute end-0 top-50 translate-middle-y me-2" aria-label="Clear" style="display: none;"></button>
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-secondary">ค้นหา</button>
@@ -107,5 +108,26 @@
             </nav>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.querySelector('input[name="search"]');
+            const clearBtn = document.getElementById('clearSearch');
+
+            function toggleClear() {
+                clearBtn.style.display = input.value ? 'block' : 'none';
+            }
+
+            clearBtn.addEventListener('click', function () {
+                input.value = '';
+                toggleClear();
+                input.focus();
+            });
+
+            input.addEventListener('input', toggleClear);
+
+            toggleClear();
+        });
+    </script>
 </body>
 </html>
