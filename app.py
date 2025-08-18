@@ -25,32 +25,65 @@ def index():
     # รับค่าหน้าปัจจุบันจาก query string (ค่าเริ่มต้น = 1)
     page = request.args.get(get_page_parameter(), type=int, default=1)
     per_page = request.args.get("per_page", type=int, default=10)  # ปรับได้จาก query string
+    search = request.args.get("search", default="").strip()
+    paid_filter = request.args.get("paid_filter", default="ALL")
     offset = (page - 1) * per_page
 
     cur = mydb.cursor(dictionary=True)  # dict เพื่ออ้างชื่อคอลัมน์ใน template ได้ง่าย
-    # ดึงข้อมูลจากตาราง isurvey พร้อมตรวจสอบสถานะจ่าย
-    cur.execute(
-        """
-        SELECT i.*, 
+
+    conditions = []
+    params = []
+
+    if search:
+        conditions.append("(i.claim LIKE %s OR i.invoice LIKE %s)")
+        like = f"%{search}%"
+        params.extend([like, like])
+
+    if paid_filter == "PAID":
+        conditions.append(
+            """
+            EXISTS (
+                SELECT 1 FROM paid p
+                WHERE p.claim = i.claim
+                  AND REPLACE(REPLACE(i.invoiceref, '[', ''), ']', '') LIKE CONCAT('%', p.invoice, '%')
+            )
+            """
+        )
+    elif paid_filter == "UNPAID":
+        conditions.append(
+            """
+            NOT EXISTS (
+                SELECT 1 FROM paid p
+                WHERE p.claim = i.claim
+                  AND REPLACE(REPLACE(i.invoiceref, '[', ''), ']', '') LIKE CONCAT('%', p.invoice, '%')
+            )
+            """
+        )
+
+    where_clause = "WHERE " + " AND ".join(["1=1"] + conditions)
+
+    query = f"""
+        SELECT i.*,
                CASE
                    WHEN EXISTS (
                        SELECT 1
                        FROM paid p
                        WHERE p.claim = i.claim
-                        AND REPLACE(REPLACE(i.invoiceref, '[', ''), ']', '') LIKE CONCAT('%', p.invoice, '%')
+                         AND REPLACE(REPLACE(i.invoiceref, '[', ''), ']', '') LIKE CONCAT('%', p.invoice, '%')
                    )
                THEN 'PAID'
                ELSE ''
                END AS paid_status
         FROM isurvey i
+        {where_clause}
         LIMIT %s OFFSET %s
-        """,
-        (per_page, offset),
-    )
+    """
+    cur.execute(query, params + [per_page, offset])
     rows = cur.fetchall()
 
     # นับจำนวนทั้งหมดเพื่อคำนวณจำนวนหน้า
-    cur.execute("SELECT COUNT(*) AS cnt FROM isurvey")
+    count_query = f"SELECT COUNT(*) AS cnt FROM isurvey i {where_clause}"
+    cur.execute(count_query, params)
     total = cur.fetchone()["cnt"]
     cur.close()
 
@@ -72,7 +105,9 @@ def index():
         pagination=pagination,
         page=page,
         per_page=per_page,
-        total=total
+        total=total,
+        search=search,
+        paid_filter=paid_filter
     )
 
 
