@@ -48,7 +48,7 @@
                 </select>
             </div>
             <div class="col-auto ms-auto position-relative">
-                <input type="text" name="search" value="{{ search }}" class="form-control pe-5" placeholder="ค้นหา">
+                <input type="text" id="searchInput" name="search" value="{{ search }}" class="form-control pe-5" placeholder="ค้นหา">
                 <button type="button" id="clearSearch" class="btn-close position-absolute end-0 top-50 translate-middle-y me-2" aria-label="Clear" style="display: none;"></button>
             </div>
             <div class="col-auto">
@@ -111,20 +111,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const input = document.querySelector('input[name="search"]');
+            const searchInput = document.getElementById('searchInput');
             const clearBtn = document.getElementById('clearSearch');
 
             function toggleClear() {
-                clearBtn.style.display = input.value ? 'block' : 'none';
+                clearBtn.style.display = searchInput.value ? 'block' : 'none';
             }
 
             clearBtn.addEventListener('click', function () {
-                input.value = '';
+                searchInput.value = '';
                 toggleClear();
-                input.focus();
+                searchInput.focus();
             });
 
-            input.addEventListener('input', toggleClear);
+            searchInput.addEventListener('input', toggleClear);
 
             toggleClear();
         });
