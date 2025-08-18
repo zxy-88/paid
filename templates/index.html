@@ -11,11 +11,32 @@
 <body class="bg-light">
     <div class="container py-4">
         <h1 class="mb-3">ข้อมูล</h1>
-        <a href="{{ url_for('import_excel') }}" class="btn btn-success mb-3">นำเข้า Excel</a>
-        <a href="{{ url_for('import_paid') }}" class="btn btn-primary mb-3">นำเข้า Paid</a>
+        <div class="d-flex justify-content-between mb-3">
+            <div>
+                <a href="{{ url_for('import_excel') }}" class="btn btn-success me-2">นำเข้า Excel</a>
+                <a href="{{ url_for('import_paid') }}" class="btn btn-primary">นำเข้า Paid</a>
+            </div>
+            <form method="get" class="d-flex align-items-center gap-2">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paid_filter" id="filterAll" value="ALL" onchange="this.form.submit()" {{ 'checked' if paid_filter=='ALL' else '' }}>
+                    <label class="form-check-label" for="filterAll">All</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paid_filter" id="filterPaid" value="PAID" onchange="this.form.submit()" {{ 'checked' if paid_filter=='PAID' else '' }}>
+                    <label class="form-check-label" for="filterPaid">PAID</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="paid_filter" id="filterUnpaid" value="UNPAID" onchange="this.form.submit()" {{ 'checked' if paid_filter=='UNPAID' else '' }}>
+                    <label class="form-check-label" for="filterUnpaid">UNPAID</label>
+                </div>
+                <input type="hidden" name="per_page" value="{{ per_page }}">
+                <input type="hidden" name="search" value="{{ search }}">
+                <input type="hidden" name="page" value="1">
+            </form>
+        </div>
 
         <!-- แถบควบคุมจำนวนต่อหน้า -->
-        <form class="row g-2 mb-3" method="get">
+        <form class="row g-2 mb-3 align-items-center" method="get">
             <div class="col-auto">
                 <label class="col-form-label">แสดงต่อหน้า</label>
             </div>
@@ -26,8 +47,15 @@
                     {% endfor %}
                 </select>
             </div>
-            <!-- คง page=1 เสมอเมื่อเปลี่ยน per_page -->
+            <div class="col-auto ms-auto">
+                <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="ค้นหา">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-secondary">ค้นหา</button>
+            </div>
+            <!-- คง page=1 เสมอเมื่อเปลี่ยน per_page หรือค้นหาใหม่ -->
             <input type="hidden" name="page" value="1">
+            <input type="hidden" name="paid_filter" value="{{ paid_filter }}">
         </form>
 
         <div class="card shadow-sm">
