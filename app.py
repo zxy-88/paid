@@ -26,6 +26,18 @@ def invoice_number(value):
     return cleaned.split("-")[-1] if cleaned else ""
 
 
+def record_exists(table, claim, invoice):
+    """Check if a record with given claim and invoice already exists."""
+    cur = mydb.cursor()
+    cur.execute(
+        f"SELECT 1 FROM {table} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s LIMIT 1",
+        (clean_field(claim), invoice_number(invoice)),
+    )
+    exists = cur.fetchone() is not None
+    cur.close()
+    return exists
+
+
 @app.route("/")
 def index():
     # รับค่าหน้าปัจจุบันจาก query string (ค่าเริ่มต้น = 1)
@@ -143,9 +155,12 @@ def import_excel():
                 df["claim"] = df["claim"].apply(clean_field)
                 df["invoice"] = df["invoice"].apply(clean_field)
                 df = df[(df["claim"] != "") & (df["invoice"] != "")]
-
                 cur = mydb.cursor()
+                inserted, duplicates = [], 0
                 for _, row in df.iterrows():
+                    if record_exists("isurvey", row["claim"], row["invoice"]):
+                        duplicates += 1
+                        continue
                     cur.execute(
                         """
                         INSERT INTO isurvey
@@ -164,10 +179,13 @@ def import_excel():
                             row["statuskey"],
                         ),
                     )
+                    inserted.append(row.to_dict())
                 mydb.commit()
                 cur.close()
-                data = df.to_dict(orient="records")
+                data = inserted
                 message = "นำเข้าข้อมูลแล้ว"
+                if duplicates:
+                    message += f" (ข้าม {duplicates} รายการซ้ำ)"
         elif form_type == "manual":
             entry = {
                 "day": request.form.get("day"),
@@ -180,29 +198,32 @@ def import_excel():
                 "status": request.form.get("status"),
                 "statuskey": request.form.get("statuskey"),
             }
-            cur = mydb.cursor()
-            cur.execute(
-                """
-                INSERT INTO isurvey
-                (day, claim, invoice, invoiceref, no, offer, approve, status, statuskey)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    entry["day"],
-                    entry["claim"],
-                    entry["invoice"],
-                    entry["invoiceref"],
-                    entry["no"],
-                    entry["offer"],
-                    entry["approve"],
-                    entry["status"],
-                    entry["statuskey"],
-                ),
-            )
-            mydb.commit()
-            cur.close()
-            data = [entry]
-            message = "บันทึกข้อมูลแล้ว"
+            if record_exists("isurvey", entry["claim"], entry["invoice"]):
+                message = "ข้อมูลซ้ำ"
+            else:
+                cur = mydb.cursor()
+                cur.execute(
+                    """
+                    INSERT INTO isurvey
+                    (day, claim, invoice, invoiceref, no, offer, approve, status, statuskey)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        entry["day"],
+                        entry["claim"],
+                        entry["invoice"],
+                        entry["invoiceref"],
+                        entry["no"],
+                        entry["offer"],
+                        entry["approve"],
+                        entry["status"],
+                        entry["statuskey"],
+                    ),
+                )
+                mydb.commit()
+                cur.close()
+                data = [entry]
+                message = "บันทึกข้อมูลแล้ว"
     return render_template("import.html", data=data, message=message)
 
 
@@ -224,7 +245,11 @@ def import_paid():
                 df["invoice"] = df["invoice"].apply(clean_field)
                 df = df[(df["claim"] != "") & (df["invoice"] != "")]
                 cur = mydb.cursor()
+                inserted, duplicates = [], 0
                 for _, row in df.iterrows():
+                    if record_exists("paid", row["claim"], row["invoice"]):
+                        duplicates += 1
+                        continue
                     cur.execute(
                         "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
                         (
@@ -234,10 +259,13 @@ def import_paid():
                             row["amount"],
                         ),
                     )
+                    inserted.append(row.to_dict())
                 mydb.commit()
                 cur.close()
-                data = df.to_dict(orient="records")
+                data = inserted
                 message = "นำเข้าข้อมูลแล้ว"
+                if duplicates:
+                    message += f" (ข้าม {duplicates} รายการซ้ำ)"
         elif form_type == "manual":
             # ดึงค่าจากฟอร์มและแปลง amount ให้เป็นตัวเลขหรือ None
             amount_raw = request.form.get("amount")
@@ -253,28 +281,31 @@ def import_paid():
                 "amount": amount_val,
             }
 
-            cur = mydb.cursor()
-            try:
-                cur.execute(
-                    "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-                    (
-                        entry["payment"],
-                        entry["claim"],
-                        entry["invoice"],
-                        entry["amount"],
-                    ),
-                )
-                mydb.commit()
-                if cur.rowcount == 1:
-                    data = [entry]
-                    message = "บันทึกข้อมูลแล้ว"
-                else:
-                    message = "ไม่สามารถบันทึกข้อมูลได้"
-            except mysql.connector.Error as e:
-                mydb.rollback()
-                message = f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {e.msg if hasattr(e, 'msg') else e}"
-            finally:
-                cur.close()
+            if record_exists("paid", entry["claim"], entry["invoice"]):
+                message = "ข้อมูลซ้ำ"
+            else:
+                cur = mydb.cursor()
+                try:
+                    cur.execute(
+                        "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+                        (
+                            entry["payment"],
+                            entry["claim"],
+                            entry["invoice"],
+                            entry["amount"],
+                        ),
+                    )
+                    mydb.commit()
+                    if cur.rowcount == 1:
+                        data = [entry]
+                        message = "บันทึกข้อมูลแล้ว"
+                    else:
+                        message = "ไม่สามารถบันทึกข้อมูลได้"
+                except mysql.connector.Error as e:
+                    mydb.rollback()
+                    message = f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {e.msg if hasattr(e, 'msg') else e}"
+                finally:
+                    cur.close()
     return render_template("paid.html", data=data, message=message)
 
 
