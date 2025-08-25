@@ -20,6 +20,12 @@ def clean_field(value):
     return str(value).replace("/", "").replace("'", "").replace(" ", "").strip()
 
 
+def invoice_number(value):
+    """Extract numeric part of an invoice like 'SEABI-250250100002'."""
+    cleaned = clean_field(value)
+    return cleaned.split("-")[-1] if cleaned else ""
+
+
 @app.route("/")
 def index():
     # รับค่าหน้าปัจจุบันจาก query string (ค่าเริ่มต้น = 1)
@@ -280,7 +286,10 @@ def paid_redirect():
 @app.route("/manage", methods=["GET", "POST"], endpoint="manage_records")
 def manage_records():
     table = request.form.get("table", request.args.get("table", "isurvey"))
-    search = clean_field(request.form.get("search", ""))
+    search = clean_field(request.form.get("search", request.args.get("search", "")))
+    invoice_search = clean_field(
+        request.form.get("invoice_search", request.args.get("invoice_search", ""))
+    )
     record = None
     message = None
     fields = []
@@ -299,8 +308,8 @@ def manage_records():
         cur = mydb.cursor(dictionary=True, buffered=True)
         if action == "search":
             cur.execute(
-                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
-                (search,),
+                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s",
+                (search, invoice_search),
             )
             record = cur.fetchone()
         elif action == "update":
@@ -310,36 +319,47 @@ def manage_records():
             ]
             set_clause = ", ".join([f"{f}=%s" for f in fields])
             cur.execute(
-                f"UPDATE {table} SET {set_clause} WHERE REPLACE(claim, ' ', '')=%s",
-                values + [search],
+                f"UPDATE {table} SET {set_clause} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s",
+                values + [search, invoice_search],
             )
             mydb.commit()
             message = "แก้ไขข้อมูลแล้ว"
+            new_claim = clean_field(request.form.get("claim"))
+            new_invoice = invoice_number(request.form.get("invoice"))
             cur.execute(
-                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
-                (clean_field(request.form.get("claim")),),
+                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s",
+                (new_claim, new_invoice),
             )
             record = cur.fetchone()
-            search = clean_field(request.form.get("claim"))
+            search = new_claim
+            invoice_search = new_invoice
         elif action == "delete":
             cur.execute(
-                f"DELETE FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
-                (search,),
+                f"DELETE FROM {table} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s",
+                (search, invoice_search),
             )
             mydb.commit()
             message = "ลบข้อมูลแล้ว"
             record = None
         cur.close()
-    elif search:
+    elif search and invoice_search:
         cur = mydb.cursor(dictionary=True, buffered=True)
         cur.execute(
-            f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
-            (search,),
+            f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s AND SUBSTRING_INDEX(invoice, '-', -1)=%s",
+            (search, invoice_search),
         )
         record = cur.fetchone()
         cur.close()
 
-    return render_template("manage.html", table=table, search=search, record=record, message=message, fields=fields)
+    return render_template(
+        "manage.html",
+        table=table,
+        search=search,
+        invoice_search=invoice_search,
+        record=record,
+        message=message,
+        fields=fields,
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
