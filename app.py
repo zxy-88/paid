@@ -233,26 +233,34 @@ def import_paid():
                 data = df.to_dict(orient="records")
                 message = "นำเข้าข้อมูลแล้ว"
         elif form_type == "manual":
+            # ดึงค่าจากฟอร์มและแปลง amount ให้เป็นตัวเลขหรือ None
+            amount_raw = request.form.get("amount")
             entry = {
                 "payment": request.form.get("payment"),
                 "claim": clean_field(request.form.get("claim")),
                 "invoice": clean_field(request.form.get("invoice")),
-                "amount": request.form.get("amount"),
+                "amount": float(amount_raw) if amount_raw else None,
             }
+
             cur = mydb.cursor()
-            cur.execute(
-                "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-                (
-                    entry["payment"],
-                    entry["claim"],
-                    entry["invoice"],
-                    entry["amount"],
-                ),
-            )
-            mydb.commit()
-            cur.close()
-            data = [entry]
-            message = "บันทึกข้อมูลแล้ว"
+            try:
+                cur.execute(
+                    "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+                    (
+                        entry["payment"],
+                        entry["claim"],
+                        entry["invoice"],
+                        entry["amount"],
+                    ),
+                )
+                mydb.commit()
+                data = [entry]
+                message = "บันทึกข้อมูลแล้ว"
+            except mysql.connector.Error as e:
+                mydb.rollback()
+                message = f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {e.msg if hasattr(e, 'msg') else e}"
+            finally:
+                cur.close()
     return render_template("paid.html", data=data, message=message)
 
 
