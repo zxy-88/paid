@@ -21,6 +21,10 @@
                 <input type="text" id="search" name="search" value="{{ search }}" class="form-control">
             </div>
             <div class="col-md-3">
+                <label for="invoice_search" class="form-label">ค้นหา invoice</label>
+                <input type="text" id="invoice_search" name="invoice_search" value="{{ invoice_search }}" class="form-control">
+            </div>
+            <div class="col-md-3">
                 <button type="submit" name="action" value="search" class="btn btn-secondary">ค้นหา</button>
             </div>
         </form>
@@ -28,6 +32,7 @@
         <form method="post" class="mt-4">
             <input type="hidden" name="table" value="{{ table }}">
             <input type="hidden" name="search" value="{{ search }}">
+            <input type="hidden" name="invoice_search" value="{{ invoice_search }}">
             <div class="row g-3">
                 {% for f in fields %}
                 <div class="col-md-3">
