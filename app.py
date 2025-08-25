@@ -280,7 +280,7 @@ def manage_records():
 
     if request.method == "POST":
         action = request.form.get("action")
-        cur = mydb.cursor(dictionary=True)
+        cur = mydb.cursor(dictionary=True, buffered=True)
         if action == "search":
             cur.execute(
                 f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
@@ -315,7 +315,7 @@ def manage_records():
             record = None
         cur.close()
     elif search:
-        cur = mydb.cursor(dictionary=True)
+        cur = mydb.cursor(dictionary=True, buffered=True)
         cur.execute(
             f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
             (search,),
