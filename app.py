@@ -17,7 +17,7 @@ def clean_field(value):
     """Remove blanks, slashes, and single quotes from a field."""
     if pd.isna(value):
         return ""
-    return str(value).replace("/", "").replace("'", "").strip()
+    return str(value).replace("/", "").replace("'", "").replace(" ", "").strip()
 
 
 @app.route("/")
@@ -264,7 +264,7 @@ def paid_redirect():
 @app.route("/manage", methods=["GET", "POST"], endpoint="manage_records")
 def manage_records():
     table = request.form.get("table", request.args.get("table", "isurvey"))
-    search = request.form.get("search", "")
+    search = clean_field(request.form.get("search", ""))
     record = None
     message = None
     fields = []
@@ -282,7 +282,10 @@ def manage_records():
         action = request.form.get("action")
         cur = mydb.cursor(dictionary=True)
         if action == "search":
-            cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(search),))
+            cur.execute(
+                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
+                (search,),
+            )
             record = cur.fetchone()
         elif action == "update":
             values = [
@@ -291,26 +294,32 @@ def manage_records():
             ]
             set_clause = ", ".join([f"{f}=%s" for f in fields])
             cur.execute(
-                f"UPDATE {table} SET {set_clause} WHERE claim=%s",
-                values + [clean_field(search)],
+                f"UPDATE {table} SET {set_clause} WHERE REPLACE(claim, ' ', '')=%s",
+                values + [search],
             )
             mydb.commit()
             message = "แก้ไขข้อมูลแล้ว"
             cur.execute(
-                f"SELECT * FROM {table} WHERE claim=%s",
+                f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
                 (clean_field(request.form.get("claim")),),
             )
             record = cur.fetchone()
             search = clean_field(request.form.get("claim"))
         elif action == "delete":
-            cur.execute(f"DELETE FROM {table} WHERE claim=%s", (clean_field(search),))
+            cur.execute(
+                f"DELETE FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
+                (search,),
+            )
             mydb.commit()
             message = "ลบข้อมูลแล้ว"
             record = None
         cur.close()
     elif search:
         cur = mydb.cursor(dictionary=True)
-        cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(search),))
+        cur.execute(
+            f"SELECT * FROM {table} WHERE REPLACE(claim, ' ', '')=%s",
+            (search,),
+        )
         record = cur.fetchone()
         cur.close()
 
