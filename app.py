@@ -285,14 +285,23 @@ def manage_records():
             cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(search),))
             record = cur.fetchone()
         elif action == "update":
-            values = [request.form.get(f) for f in fields]
+            values = [
+                clean_field(request.form.get(f)) if f in ["claim", "invoice"] else request.form.get(f)
+                for f in fields
+            ]
             set_clause = ", ".join([f"{f}=%s" for f in fields])
-            cur.execute(f"UPDATE {table} SET {set_clause} WHERE claim=%s", values + [clean_field(search)])
+            cur.execute(
+                f"UPDATE {table} SET {set_clause} WHERE claim=%s",
+                values + [clean_field(search)],
+            )
             mydb.commit()
             message = "แก้ไขข้อมูลแล้ว"
-            cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(request.form.get("claim")),))
+            cur.execute(
+                f"SELECT * FROM {table} WHERE claim=%s",
+                (clean_field(request.form.get("claim")),),
+            )
             record = cur.fetchone()
-            search = request.form.get("claim")
+            search = clean_field(request.form.get("claim"))
         elif action == "delete":
             cur.execute(f"DELETE FROM {table} WHERE claim=%s", (clean_field(search),))
             mydb.commit()
