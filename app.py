@@ -235,11 +235,16 @@ def import_paid():
         elif form_type == "manual":
             # ดึงค่าจากฟอร์มและแปลง amount ให้เป็นตัวเลขหรือ None
             amount_raw = request.form.get("amount")
+            try:
+                amount_val = float(amount_raw) if amount_raw else None
+            except ValueError:
+                amount_val = None
+
             entry = {
                 "payment": request.form.get("payment"),
                 "claim": clean_field(request.form.get("claim")),
                 "invoice": clean_field(request.form.get("invoice")),
-                "amount": float(amount_raw) if amount_raw else None,
+                "amount": amount_val,
             }
 
             cur = mydb.cursor()
@@ -254,8 +259,11 @@ def import_paid():
                     ),
                 )
                 mydb.commit()
-                data = [entry]
-                message = "บันทึกข้อมูลแล้ว"
+                if cur.rowcount == 1:
+                    data = [entry]
+                    message = "บันทึกข้อมูลแล้ว"
+                else:
+                    message = "ไม่สามารถบันทึกข้อมูลได้"
             except mysql.connector.Error as e:
                 mydb.rollback()
                 message = f"เกิดข้อผิดพลาดในการบันทึกข้อมูล: {e.msg if hasattr(e, 'msg') else e}"
