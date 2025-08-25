@@ -116,50 +116,87 @@ def import_excel():
     data = None
     message = None
     if request.method == "POST":
-        file = request.files.get("file")
-        if file:
-            df = pd.read_excel(file, header=None)
-            df = df.iloc[1:, :9]
-            df.columns = [
-                "day",
-                "claim",
-                "invoice",
-                "invoiceref",
-                "no",
-                "offer",
-                "approve",
-                "status",
-                "statuskey",
-            ]
+        form_type = request.form.get("form_type")
+        if form_type == "excel":
+            file = request.files.get("file")
+            if file:
+                df = pd.read_excel(file, header=None)
+                df = df.iloc[1:, :9]
+                df.columns = [
+                    "day",
+                    "claim",
+                    "invoice",
+                    "invoiceref",
+                    "no",
+                    "offer",
+                    "approve",
+                    "status",
+                    "statuskey",
+                ]
 
-            df["claim"] = df["claim"].apply(clean_field)
-            df["invoice"] = df["invoice"].apply(clean_field)
-            df = df[(df["claim"] != "") & (df["invoice"] != "")]
+                df["claim"] = df["claim"].apply(clean_field)
+                df["invoice"] = df["invoice"].apply(clean_field)
+                df = df[(df["claim"] != "") & (df["invoice"] != "")]
 
+                cur = mydb.cursor()
+                for _, row in df.iterrows():
+                    cur.execute(
+                        """
+                        INSERT INTO isurvey
+                        (day, claim, invoice, invoiceref, no, offer, approve, status, statuskey)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            row["day"],
+                            row["claim"],
+                            row["invoice"],
+                            row["invoiceref"],
+                            row["no"],
+                            row["offer"],
+                            row["approve"],
+                            row["status"],
+                            row["statuskey"],
+                        ),
+                    )
+                mydb.commit()
+                cur.close()
+                data = df.to_dict(orient="records")
+                message = "นำเข้าข้อมูลแล้ว"
+        elif form_type == "manual":
+            entry = {
+                "day": request.form.get("day"),
+                "claim": clean_field(request.form.get("claim")),
+                "invoice": clean_field(request.form.get("invoice")),
+                "invoiceref": request.form.get("invoiceref"),
+                "no": request.form.get("no"),
+                "offer": request.form.get("offer"),
+                "approve": request.form.get("approve"),
+                "status": request.form.get("status"),
+                "statuskey": request.form.get("statuskey"),
+            }
             cur = mydb.cursor()
-            for _, row in df.iterrows():
-                cur.execute(
-                    """
-                    INSERT INTO isurvey
-                    (day, claim, invoice, invoiceref, no, offer, approve, status, statuskey)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        row["day"],
-                        row["claim"],
-                        row["invoice"],
-                        row["invoiceref"],
-                        row["no"],
-                        row["offer"],
-                        row["approve"],
-                        row["status"],
-                        row["statuskey"],
-                    ),
-                )
+            cur.execute(
+                """
+                INSERT INTO isurvey
+                (day, claim, invoice, invoiceref, no, offer, approve, status, statuskey)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    entry["day"],
+                    entry["claim"],
+                    entry["invoice"],
+                    entry["invoiceref"],
+                    entry["no"],
+                    entry["offer"],
+                    entry["approve"],
+                    entry["status"],
+                    entry["statuskey"],
+                ),
+            )
             mydb.commit()
             cur.close()
-            data = df.to_dict(orient="records")
-            message = "นำเข้าข้อมูลแล้ว"
+            data = [entry]
+            message = "บันทึกข้อมูลแล้ว"
     return render_template("import.html", data=data, message=message)
 
 
@@ -170,29 +207,52 @@ def import_paid():
     data = None
     message = None
     if request.method == "POST":
-        file = request.files.get("file")
-        if file:
-            df = pd.read_excel(file, header=None)
-            df = df.iloc[1:, :4]
-            df.columns = ["payment", "claim", "invoice", "amount"]
-            df["claim"] = df["claim"].apply(clean_field)
-            df["invoice"] = df["invoice"].apply(clean_field)
-            df = df[(df["claim"] != "") & (df["invoice"] != "")]
+        form_type = request.form.get("form_type")
+        if form_type == "excel":
+            file = request.files.get("file")
+            if file:
+                df = pd.read_excel(file, header=None)
+                df = df.iloc[1:, :4]
+                df.columns = ["payment", "claim", "invoice", "amount"]
+                df["claim"] = df["claim"].apply(clean_field)
+                df["invoice"] = df["invoice"].apply(clean_field)
+                df = df[(df["claim"] != "") & (df["invoice"] != "")]
+                cur = mydb.cursor()
+                for _, row in df.iterrows():
+                    cur.execute(
+                        "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+                        (
+                            row["payment"],
+                            row["claim"],
+                            row["invoice"],
+                            row["amount"],
+                        ),
+                    )
+                mydb.commit()
+                cur.close()
+                data = df.to_dict(orient="records")
+                message = "นำเข้าข้อมูลแล้ว"
+        elif form_type == "manual":
+            entry = {
+                "payment": request.form.get("payment"),
+                "claim": clean_field(request.form.get("claim")),
+                "invoice": clean_field(request.form.get("invoice")),
+                "amount": request.form.get("amount"),
+            }
             cur = mydb.cursor()
-            for _, row in df.iterrows():
-                cur.execute(
-                    "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
-                    (
-                        row["payment"],
-                        row["claim"],
-                        row["invoice"],
-                        row["amount"],
-                    ),
-                )
+            cur.execute(
+                "INSERT INTO paid (payment, claim, invoice, amount) VALUES (%s, %s, %s, %s)",
+                (
+                    entry["payment"],
+                    entry["claim"],
+                    entry["invoice"],
+                    entry["amount"],
+                ),
+            )
             mydb.commit()
             cur.close()
-            data = df.to_dict(orient="records")
-            message = "นำเข้าข้อมูลแล้ว"
+            data = [entry]
+            message = "บันทึกข้อมูลแล้ว"
     return render_template("paid.html", data=data, message=message)
 
 

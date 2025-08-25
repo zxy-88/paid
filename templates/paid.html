@@ -9,12 +9,38 @@
     <div class="container py-4">
         <h1 class="mb-3">นำเข้า Paid จาก Excel</h1>
         <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="excel">
             <div class="mb-3">
                 <label for="file" class="form-label">ไฟล์ Excel Paid</label>
                 <input class="form-control" type="file" id="file" name="file" required>
             </div>
             <button type="submit" class="btn btn-primary">นำเข้า</button>
             <a href="{{ url_for('index') }}" class="btn btn-secondary">กลับ</a>
+        </form>
+
+        <hr class="my-4">
+        <h2 class="mb-3">กรอกข้อมูลด้วยตนเอง</h2>
+        <form method="post">
+            <input type="hidden" name="form_type" value="manual">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="payment" class="form-label">payment</label>
+                    <input type="text" class="form-control" id="payment" name="payment">
+                </div>
+                <div class="col-md-3">
+                    <label for="claim" class="form-label">claim</label>
+                    <input type="text" class="form-control" id="claim" name="claim" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="invoice" class="form-label">invoice</label>
+                    <input type="text" class="form-control" id="invoice" name="invoice" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="amount" class="form-label">amount</label>
+                    <input type="number" step="any" class="form-control" id="amount" name="amount">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">บันทึก</button>
         </form>
 
         {% if message %}
