@@ -9,12 +9,58 @@
     <div class="container py-4">
         <h1 class="mb-3">นำเข้า Excel</h1>
         <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="excel">
             <div class="mb-3">
                 <label for="file" class="form-label">ไฟล์ Excel Isurvey</label>
                 <input class="form-control" type="file" id="file" name="file" required>
             </div>
             <button type="submit" class="btn btn-primary">นำเข้า</button>
             <a href="{{ url_for('index') }}" class="btn btn-secondary">กลับ</a>
+        </form>
+
+        <hr class="my-4">
+        <h2 class="mb-3">กรอกข้อมูลด้วยตนเอง</h2>
+        <form method="post">
+            <input type="hidden" name="form_type" value="manual">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="day" class="form-label">day</label>
+                    <input type="text" class="form-control" id="day" name="day">
+                </div>
+                <div class="col-md-3">
+                    <label for="claim" class="form-label">claim</label>
+                    <input type="text" class="form-control" id="claim" name="claim" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="invoice" class="form-label">invoice</label>
+                    <input type="text" class="form-control" id="invoice" name="invoice" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="invoiceref" class="form-label">invoiceref</label>
+                    <input type="text" class="form-control" id="invoiceref" name="invoiceref">
+                </div>
+                <div class="col-md-3">
+                    <label for="no" class="form-label">no</label>
+                    <input type="text" class="form-control" id="no" name="no">
+                </div>
+                <div class="col-md-3">
+                    <label for="offer" class="form-label">offer</label>
+                    <input type="text" class="form-control" id="offer" name="offer">
+                </div>
+                <div class="col-md-3">
+                    <label for="approve" class="form-label">approve</label>
+                    <input type="text" class="form-control" id="approve" name="approve">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">status</label>
+                    <input type="text" class="form-control" id="status" name="status">
+                </div>
+                <div class="col-md-3">
+                    <label for="statuskey" class="form-label">statuskey</label>
+                    <input type="text" class="form-control" id="statuskey" name="statuskey">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success mt-3">บันทึก</button>
         </form>
 
         {% if message %}
