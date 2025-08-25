@@ -260,5 +260,52 @@ def import_paid():
 def paid_redirect():
     return redirect(url_for("import_paid"))
 
+
+@app.route("/manage", methods=["GET", "POST"], endpoint="manage_records")
+def manage_records():
+    table = request.form.get("table", request.args.get("table", "isurvey"))
+    search = request.form.get("search", "")
+    record = None
+    message = None
+    fields = []
+
+    if table not in ["isurvey", "paid"]:
+        message = "เลือกฐานข้อมูลไม่ถูกต้อง"
+        table = "isurvey"
+
+    if table == "isurvey":
+        fields = ["day", "claim", "invoice", "invoiceref", "no", "offer", "approve", "status", "statuskey"]
+    else:
+        fields = ["payment", "claim", "invoice", "amount"]
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        cur = mydb.cursor(dictionary=True)
+        if action == "search":
+            cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(search),))
+            record = cur.fetchone()
+        elif action == "update":
+            values = [request.form.get(f) for f in fields]
+            set_clause = ", ".join([f"{f}=%s" for f in fields])
+            cur.execute(f"UPDATE {table} SET {set_clause} WHERE claim=%s", values + [clean_field(search)])
+            mydb.commit()
+            message = "แก้ไขข้อมูลแล้ว"
+            cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(request.form.get("claim")),))
+            record = cur.fetchone()
+            search = request.form.get("claim")
+        elif action == "delete":
+            cur.execute(f"DELETE FROM {table} WHERE claim=%s", (clean_field(search),))
+            mydb.commit()
+            message = "ลบข้อมูลแล้ว"
+            record = None
+        cur.close()
+    elif search:
+        cur = mydb.cursor(dictionary=True)
+        cur.execute(f"SELECT * FROM {table} WHERE claim=%s", (clean_field(search),))
+        record = cur.fetchone()
+        cur.close()
+
+    return render_template("manage.html", table=table, search=search, record=record, message=message, fields=fields)
+
 if __name__ == "__main__":
     app.run(debug=True)
