@@ -154,6 +154,9 @@ def import_excel():
 
                 df["claim"] = df["claim"].apply(clean_field)
                 df["invoice"] = df["invoice"].apply(clean_field)
+                # Replace any NaN values with None so MySQL sees NULL instead of the
+                # literal string "nan", which would cause an "Unknown column" error.
+                df = df.where(pd.notnull(df), None)
                 df = df[(df["claim"] != "") & (df["invoice"] != "")]
                 cur = mydb.cursor()
                 inserted, duplicates = [], 0
@@ -243,6 +246,10 @@ def import_paid():
                 df.columns = ["payment", "claim", "invoice", "amount"]
                 df["claim"] = df["claim"].apply(clean_field)
                 df["invoice"] = df["invoice"].apply(clean_field)
+                # Convert amount to a number and replace NaN with None so the database
+                # gets NULL instead of the string "nan".
+                df["amount"] = pd.to_numeric(df["amount"], errors="coerce")
+                df = df.where(pd.notnull(df), None)
                 df = df[(df["claim"] != "") & (df["invoice"] != "")]
                 cur = mydb.cursor()
                 inserted, duplicates = [], 0
